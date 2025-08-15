@@ -1,0 +1,375 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>NetQR - Advanced QR Code Generator</title>
+    <link rel="icon" href="right-img.png" type="image/png">
+    <link href="css/bootstrap.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="css/all.min.css">
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;600&display=swap" rel="stylesheet">
+    <style>
+        html,
+        body {
+            height: 100%;
+            margin: 0;
+            font-family: 'Poppins', sans-serif;
+            background: linear-gradient(to right, #e3f2fd, #f1f8e9);
+        }
+
+        .container-flex {
+            display: flex;
+            flex-direction: column;
+            height: 100vh;
+        }
+
+        header {
+            background: #0d6efd;
+            color: white;
+            padding: 12px 20px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+        }
+
+        header h1 {
+            font-weight: 700;
+            font-size: 1.6rem;
+            margin: 0;
+        }
+
+        header p {
+            margin: 0;
+            font-weight: 600;
+            font-size: 0.95rem;
+        }
+
+        main {
+            flex: 1;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            padding: 10px;
+        }
+
+        .qr-card {
+            display: flex;
+            flex-direction: row;
+            background: white;
+            border-radius: 15px;
+            box-shadow: 0 8px 20px rgba(0, 0, 0, 0.1);
+            width: 100%;
+            max-width: 900px;
+            padding: 15px;
+            gap: 15px;
+            align-items: flex-start;
+        }
+
+        .qr-card .left,
+        .qr-card .right {
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+        }
+
+        .instructions {
+            font-size: 14px;
+            color: #333;
+            background: #f9fbfd;
+            padding: 10px;
+            border-radius: 12px;
+            border-left: 4px solid #0d6efd;
+            margin-bottom: 10px;
+        }
+
+        form {
+            display: flex;
+            flex-direction: column;
+            gap: 6px;
+        }
+
+        .d-flex.justify-content-between {
+            gap: 8px;
+        }
+
+        .qr-code {
+            margin-top: 5px;
+            display: none;
+            text-align: center;
+        }
+
+        canvas {
+            border-radius: 10px;
+            box-shadow: 0 6px 18px rgba(0, 0, 0, 0.1);
+            width: 200px;
+            height: 200px;
+            margin-bottom: 8px;
+        }
+
+        .download-btn {
+            width: 100%;
+            margin-top: 5px;
+        }
+
+        #qrLoading {
+            display: none;
+            text-align: center;
+            margin-bottom: 10px;
+        }
+
+        .qr-placeholder {
+            text-align: center;
+            opacity: 0.3;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            gap: 5px;
+        }
+
+        .qr-placeholder img {
+            max-width: 150px;
+            margin: 0 auto;
+        }
+
+        footer {
+            background: #f8f9fa;
+            text-align: center;
+            padding: 10px;
+            font-size: 14px;
+            color: #555;
+            border-top: 1px solid #ddd;
+        }
+
+        @media(max-width:768px) {
+            .qr-card {
+                flex-direction: column;
+                padding: 10px;
+            }
+        }
+
+        /* Modal preview canvas */
+        #modalPreview {
+            border: 1px solid #ddd;
+            border-radius: 10px;
+            display: block;
+            margin: 10px auto 0 auto;
+            background: #fff;
+        }
+    </style>
+</head>
+
+<body>
+    <div class="container-flex">
+        <header>
+            <h1><i class="fas fa-qrcode me-2"></i>NetQR Generator</h1>
+            <p>Generate your QR Code</p>
+        </header>
+        <main>
+            <div class="qr-card">
+                <div class="left">
+                    <div class="instructions">
+                        <h5><i class="fas fa-lightbulb me-2 text-warning"></i>How to Use?</h5>
+                        <ul class="mb-0">
+                            <li>Type any link, text, or message in the input box.</li>
+                            <li>Click <b>Generate</b> to create your QR code instantly.</li>
+                            <li>Press <b>Reset</b> to start over and generate another QR code.</li>
+                            <li>Click <b>Download</b> to choose resolution and download your QR code.</li>
+                        </ul>
+                    </div>
+                    <form id="qrForm">
+                        <input type="text" id="urlInput" class="form-control" placeholder="Enter text or URL here..."
+                            required>
+                        <div class="d-flex justify-content-between">
+                            <button type="submit" class="btn btn-primary w-50">Generate</button>
+                            <button type="button" id="resetBtn" class="btn btn-danger w-50">Reset</button>
+                        </div>
+                    </form>
+                </div>
+                <div class="right">
+                    <div id="qrLoading">
+                        <div class="spinner-border text-primary" role="status"><span
+                                class="visually-hidden">Loading...</span></div>
+                        <p>Generating QR code...</p>
+                    </div>
+                    <div id="qrResult" class="qr-code">
+                        <h5 class="fw-semibold">Your QR Code:</h5>
+                        <canvas id="qrCanvas" width="250" height="250"></canvas>
+                        <button type="button" id="openDownloadModal"
+                            class="btn btn-success download-btn w-100"><i class="fas fa-download me-2"></i>Download
+                            QR Code</button>
+                    </div>
+                    <div id="qrPlaceholder" class="qr-placeholder">
+                        <img src="right-img.png" alt="QR Placeholder">
+                        <p>Your QR code will appear here</p>
+                    </div>
+                </div>
+            </div>
+        </main>
+        <footer>2025 NetQR Generator &copy; PRK Creations | All Rights Reserved</footer>
+    </div>
+
+    <!-- Download Options Modal -->
+    <div class="modal fade" id="downloadModal" tabindex="-1" aria-labelledby="downloadModalLabel" aria-hidden="true">
+        <div class="modal-dialog modal-dialog-centered">
+            <div class="modal-content">
+                <div class="modal-header bg-primary text-white">
+                    <h5 class="modal-title" id="downloadModalLabel"><i class="fas fa-download me-2"></i>Download Options</h5>
+                    <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"
+                        aria-label="Close"></button>
+                </div>
+                <div class="modal-body">
+                    <label for="downloadResolution" class="form-label">Select Resolution:</label>
+                    <select id="downloadResolution" class="form-select mb-2">
+                        <option value="250" active>250 x 250</option>
+                        <option value="300">300 x 300</option>
+                        <option value="400">400 x 400</option>
+                        <option value="500">500 x 500</option>
+                        <option value="600">600 x 600</option>
+                        <option value="750">750 x 750</option>
+                        <option value="1000">1000 x 1000</option>
+                        <option value="custom">Custom</option>
+                    </select>
+                    <input type="text" id="customDownloadResolution" class="form-control mt-2"
+                        placeholder="Enter custom WxH e.g., 350x400" style="display:none;">
+                    <p class="mt-2 text-center mb-0">Preview:</p>
+                    <canvas id="modalPreview" width="200" height="200"></canvas>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" id="downloadConfirm" class="btn btn-success w-100"><i
+                            class="fas fa-download me-2"></i>Download QR Code</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script src="js/bootstrap.bundle.min.js"></script>
+    <script>
+        const form = document.getElementById('qrForm');
+        const urlInput = document.getElementById('urlInput');
+        const qrResult = document.getElementById('qrResult');
+        const qrCanvas = document.getElementById('qrCanvas');
+        const resetBtn = document.getElementById('resetBtn');
+        const qrPlaceholder = document.getElementById('qrPlaceholder');
+        const qrLoading = document.getElementById('qrLoading');
+        const ctx = qrCanvas.getContext('2d');
+
+        const openDownloadModal = document.getElementById('openDownloadModal');
+        const downloadModal = new bootstrap.Modal(document.getElementById('downloadModal'));
+        const downloadConfirm = document.getElementById('downloadConfirm');
+        const downloadResolutionSelect = document.getElementById('downloadResolution');
+        const customDownloadInput = document.getElementById('customDownloadResolution');
+        const modalPreview = document.getElementById('modalPreview');
+        const modalCtx = modalPreview.getContext('2d');
+
+        function generateQR(url) {
+            if (!url) {
+                qrResult.style.display = 'none';
+                qrPlaceholder.style.display = 'flex';
+                qrLoading.style.display = 'none';
+                ctx.clearRect(0, 0, qrCanvas.width, qrCanvas.height);
+                return;
+            }
+            qrLoading.style.display = 'block';
+            qrResult.style.display = 'none';
+            qrPlaceholder.style.display = 'none';
+
+            const res = 250; // fixed size for UI display
+            qrCanvas.width = res;
+            qrCanvas.height = res;
+
+            const qrAPI = `https://api.qrserver.com/v1/create-qr-code/?size=${res}x${res}&data=${encodeURIComponent(url)}`;
+            const qrImg = new Image();
+            qrImg.crossOrigin = "Anonymous";
+            qrImg.src = qrAPI;
+            qrImg.onload = function () {
+                ctx.clearRect(0, 0, qrCanvas.width, qrCanvas.height);
+                ctx.fillStyle = "#ffffff";
+                ctx.fillRect(0, 0, qrCanvas.width, qrCanvas.height);
+                const padding = res * 0.1;
+                ctx.drawImage(qrImg, padding, padding, qrCanvas.width - 2 * padding, qrCanvas.height - 2 * padding);
+                qrResult.style.display = 'block';
+                qrLoading.style.display = 'none';
+            };
+        }
+
+        form.addEventListener('submit', e => { e.preventDefault(); generateQR(urlInput.value.trim()); });
+        resetBtn.addEventListener('click', () => { urlInput.value = ''; generateQR(''); });
+        urlInput.addEventListener('keypress', e => { if (e.key === 'Enter') { e.preventDefault(); generateQR(urlInput.value.trim()); } });
+
+        downloadResolutionSelect.addEventListener('change', () => {
+            customDownloadInput.style.display = downloadResolutionSelect.value === 'custom' ? 'block' : 'none';
+            updateModalPreview();
+        });
+
+        customDownloadInput.addEventListener('input', updateModalPreview);
+
+        openDownloadModal.addEventListener('click', () => {
+            if (!urlInput.value.trim()) return alert("Please generate QR code first!");
+            updateModalPreview();
+            downloadModal.show();
+        });
+
+        function updateModalPreview() {
+            let width = 200, height = 200;
+            if (downloadResolutionSelect.value === 'custom') {
+                const val = customDownloadInput.value.trim().split('x');
+                if (val.length === 2) {
+                    width = parseInt(val[0]) || 200;
+                    height = parseInt(val[1]) || 200;
+                }
+            } else {
+                width = height = parseInt(downloadResolutionSelect.value);
+            }
+            modalPreview.width = width;
+            modalPreview.height = height;
+
+            const tmpCtx = modalCtx;
+            tmpCtx.clearRect(0, 0, width, height);
+            tmpCtx.fillStyle = "#ffffff";
+            tmpCtx.fillRect(0, 0, width, height);
+            const img = new Image();
+            img.src = qrCanvas.toDataURL("image/png");
+            img.onload = function () {
+                const padding = Math.min(width, height) * 0.1;
+                tmpCtx.drawImage(img, padding, padding, width - 2 * padding, height - 2 * padding);
+            };
+        }
+
+        downloadConfirm.addEventListener('click', () => {
+            let width = 250, height = 250;
+            if (downloadResolutionSelect.value === 'custom') {
+                const val = customDownloadInput.value.trim().split('x');
+                if (val.length === 2) {
+                    width = parseInt(val[0]) || 250;
+                    height = parseInt(val[1]) || 250;
+                }
+            } else {
+                width = height = parseInt(downloadResolutionSelect.value);
+            }
+
+            const tmpCanvas = document.createElement('canvas');
+            tmpCanvas.width = width;
+            tmpCanvas.height = height;
+            const tmpCtx = tmpCanvas.getContext('2d');
+
+            const img = new Image();
+            img.src = qrCanvas.toDataURL("image/png");
+            img.onload = function () {
+                tmpCtx.fillStyle = "#ffffff";
+                tmpCtx.fillRect(0, 0, width, height);
+                const padding = Math.min(width, height) * 0.1;
+                tmpCtx.drawImage(img, padding, padding, width - 2 * padding, height - 2 * padding);
+
+                const link = document.createElement('a');
+                link.href = tmpCanvas.toDataURL("image/png");
+                link.download = "qrcode.png";
+                link.click();
+                downloadModal.hide();
+            };
+        });
+    </script>
+</body>
+
+</html>
