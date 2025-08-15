@@ -67,7 +67,7 @@
 
                     </form>
                 </div>
-                                            <textarea type="text" id="Qrdata" class="form-control text-primary fw-bold mt-3 container " readonly cols=3 rows=2></textarea>
+                                            <textarea type="text" id="Qrdata" class="form-control text-primary fw-bold mt-3 container " readonly cols=3 rows=5></textarea>
            <div class="right">
                     <div id="qrLoading">
                         <div class="spinner-border text-dark" role="status"><span class="visually-hidden">Loading...</span></div>
@@ -190,7 +190,7 @@
         }
 
         form.addEventListener('submit', e => { e.preventDefault(); generateQR(urlInput.value.trim()); });
-        resetBtn.addEventListener('click', () => { urlInput.value = ''; generateQR('');document.getElementById("Qrdata").value="";});
+        resetBtn.addEventListener('click', () => { urlInput.value = ''; generateQR('');document.getElementById("Qrdata").value="";document.getElementById("Qrdata").style.display="none";});
 
         downloadResolutionSelect.addEventListener('change', () => {
             customDownloadInput.style.display = downloadResolutionSelect.value === 'custom' ? 'block' : 'none';
@@ -261,7 +261,8 @@
             qrVideo.play();
 
             qrVideo.onloadedmetadata = () => {
-                setTimeout(scanLoop, 300); // warm-up delay
+                setTimeout(scanLoop, 300); 
+                document.getElementById("Qrdata").style.display="block";// warm-up delay
             };
         } catch (err) {
             alert("Camera access denied or not available.");
