@@ -68,6 +68,11 @@
                     </form>
                 </div>
                                             <textarea type="text" id="Qrdata" class="form-control text-primary fw-bold mt-3 container" style="display:none;" readonly cols=3 rows=5></textarea>
+
+<button type="button" id="goWebsiteBtn" class="btn btn-info w-100 mt-2 text-white fw-bold" style="display:none;">
+    <i class="fas fa-external-link-alt me-2"></i>Go to Website / Copy Text
+</button>
+
            <div class="right">
                     <div id="qrLoading">
                         <div class="spinner-border text-dark" role="status"><span class="visually-hidden">Loading...</span></div>
@@ -142,6 +147,7 @@
     <script src="js/bootstrap.bundle.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/jsqr/dist/jsQR.js"></script>
     <script>
+      const goWebsiteBtn = document.getElementById("goWebsiteBtn");
         const form = document.getElementById('qrForm');
         const urlInput = document.getElementById('urlInput');
         const qrResult = document.getElementById('qrResult');
@@ -164,9 +170,11 @@
                 qrResult.style.display = 'none';
                 qrPlaceholder.style.display = 'flex';
                 qrLoading.style.display = 'none';
+                goWebsiteBtn.style.display = "none";
                 ctx.clearRect(0, 0, qrCanvas.width, qrCanvas.height);
                 return;
             }
+            goWebsiteBtn.style.display = "none";
             qrLoading.style.display = 'block';
             qrResult.style.display = 'none';
             qrPlaceholder.style.display = 'none';
@@ -191,7 +199,10 @@
         }
 
         form.addEventListener('submit', e => { e.preventDefault(); generateQR(urlInput.value.trim()); });
-        resetBtn.addEventListener('click', () => { urlInput.value = ''; generateQR('');document.getElementById("Qrdata").value="";document.getElementById("Qrdata").style.display="none";});
+        resetBtn.addEventListener('click', () => { urlInput.value = ''; generateQR('');document.getElementById("Qrdata").value="";document.getElementById("Qrdata").style.display="none";
+          goWebsiteBtn.style.display = "none";
+        });
+        
 
         downloadResolutionSelect.addEventListener('change', () => {
             customDownloadInput.style.display = downloadResolutionSelect.value === 'custom' ? 'block' : 'none';
@@ -280,13 +291,26 @@
             const imageData = ctx2.getImageData(0, 0, canvas.width, canvas.height);
             const code = jsQR(imageData.data, canvas.width, canvas.height);
             if (code) {
-                document.getElementById("Qrdata").value = code.data;
+                document.getElementById("Qrdata").value = code.data;     
+                goWebsiteBtn.style.display = "block";
                 scanQRModal.hide();
                 stopCamera();
             } else {
                 requestAnimationFrame(scanLoop);
             }
         }
+goWebsiteBtn.addEventListener("click", () => {
+  const qrDataField = document.getElementById("Qrdata");
+
+    const content = qrDataField.value.trim();
+    if (content.startsWith("http://") || content.startsWith("https://")) {
+        window.open(content, "_blank");  // open in new tab if URL
+    } else {
+        navigator.clipboard.writeText(content).then(() => {
+            alert("Text copied: " + content);
+        });
+    }
+});
 
         function stopCamera() {
             if (videoStream) {
@@ -298,7 +322,6 @@
     </script>
 </body>
 </html>
-
 
 
 
